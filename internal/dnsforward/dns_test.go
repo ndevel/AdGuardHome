@@ -17,42 +17,60 @@ import (
 func TestServer_ProcessDDRQuery(t *testing.T) {
 	const ddrHost = "_dns.resolver.arpa"
 
-	s := &Server{}
-
 	testCases := []struct {
-		name    string
-		wantRes resultCode
-		host    string
-		qtyp    uint16
-		proto   proxy.Proto
+		name        string
+		wantRes     resultCode
+		host        string
+		qtyp        uint16
+		hostSrvName string
+		ddrDisabled bool
 	}{{
-		name:    "pass_host",
-		wantRes: resultCodeSuccess,
-		host:    "example.net.",
-		qtyp:    dns.TypeSVCB,
-		proto:   proxy.ProtoTLS,
+		name:        "pass_host",
+		wantRes:     resultCodeSuccess,
+		host:        "example.net.",
+		qtyp:        dns.TypeSVCB,
+		hostSrvName: "example.com",
 	}, {
-		name:    "pass_qtype",
-		wantRes: resultCodeSuccess,
-		host:    ddrHost,
-		qtyp:    dns.TypeA,
-		proto:   proxy.ProtoTLS,
+		name:        "pass_qtype",
+		wantRes:     resultCodeSuccess,
+		host:        ddrHost,
+		qtyp:        dns.TypeA,
+		hostSrvName: "example.com",
 	}, {
-		name:    "pass_proto",
-		wantRes: resultCodeSuccess,
-		host:    ddrHost,
-		qtyp:    dns.TypeSVCB,
-		proto:   proxy.ProtoUDP,
+		name:        "pass_disabled_tls",
+		wantRes:     resultCodeSuccess,
+		host:        ddrHost,
+		qtyp:        dns.TypeSVCB,
+		hostSrvName: "",
 	}, {
-		name:    "finish",
-		wantRes: resultCodeFinish,
-		host:    ddrHost,
-		qtyp:    dns.TypeSVCB,
-		proto:   proxy.ProtoTLS,
+		name:        "pass_disabled_ddr",
+		wantRes:     resultCodeSuccess,
+		host:        ddrHost,
+		qtyp:        dns.TypeSVCB,
+		hostSrvName: "example.com",
+		ddrDisabled: true,
+	}, {
+		name:        "finish",
+		wantRes:     resultCodeFinish,
+		host:        ddrHost,
+		qtyp:        dns.TypeSVCB,
+		hostSrvName: "example.com",
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			tlsConf := TLSConfig{
+				ServerName: tc.hostSrvName,
+			}
+
+			s := &Server{
+				conf: ServerConfig{TLSConfig: tlsConf},
+			}
+
+			if tc.ddrDisabled {
+				s.conf.DDRDisabled = true
+			}
+
 			req := &dns.Msg{
 				MsgHdr: dns.MsgHdr{
 					Id: dns.Id(),
@@ -66,8 +84,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 
 			dctx := &dnsContext{
 				proxyCtx: &proxy.DNSContext{
-					Proto: tc.proto,
-					Req:   req,
+					Req: req,
 				},
 			}
 

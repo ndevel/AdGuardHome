@@ -250,10 +250,10 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 	d := ctx.proxyCtx
 	question := d.Req.Question[0]
-	proto := d.Proto
 
 	// TODO(a.garipov): Check DoQ support in next RFC drafts
-	if (proto == proxy.ProtoHTTPS || proto == proxy.ProtoTLS) &&
+	if s.conf.TLSConfig.ServerName != "" &&
+		!s.conf.DDRDisabled &&
 		question.Qtype == dns.TypeSVCB &&
 		question.Name == "_dns.resolver.arpa." {
 		// TODO(d.kolyshev): !! Implement DDR response
