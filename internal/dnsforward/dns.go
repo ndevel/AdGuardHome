@@ -245,13 +245,20 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 // processDDRQuery responds to SVCB query for a special use domain name
 // ‘_dns.resolver.arpa’.  The result contains different types of encryption
 // supported by current user configuration.
+//
+// See https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
 func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 	d := ctx.proxyCtx
+	question := d.Req.Question[0]
+	proto := d.Proto
 
-	if d.Req.Question[0].Qtype == dns.TypeSVCB &&
-		d.Req.Question[0].Name == "_dns.resolver.arpa." {
+	// TODO(a.garipov): Check DoQ support in next RFC drafts
+	if (proto == proxy.ProtoHTTPS || proto == proxy.ProtoTLS) &&
+		question.Qtype == dns.TypeSVCB &&
+		question.Name == "_dns.resolver.arpa." {
 		// TODO(d.kolyshev): !! Implement DDR response
 		d.Res = s.makeResponse(d.Req)
+
 		return resultCodeFinish
 	}
 

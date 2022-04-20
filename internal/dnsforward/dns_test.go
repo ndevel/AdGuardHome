@@ -24,21 +24,31 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		wantRes resultCode
 		host    string
 		qtyp    uint16
+		proto   proxy.Proto
 	}{{
 		name:    "pass_host",
 		wantRes: resultCodeSuccess,
 		host:    "example.net.",
 		qtyp:    dns.TypeSVCB,
+		proto:   proxy.ProtoTLS,
 	}, {
 		name:    "pass_qtype",
 		wantRes: resultCodeSuccess,
 		host:    ddrHost,
 		qtyp:    dns.TypeA,
+		proto:   proxy.ProtoTLS,
+	}, {
+		name:    "pass_proto",
+		wantRes: resultCodeSuccess,
+		host:    ddrHost,
+		qtyp:    dns.TypeSVCB,
+		proto:   proxy.ProtoUDP,
 	}, {
 		name:    "finish",
 		wantRes: resultCodeFinish,
 		host:    ddrHost,
 		qtyp:    dns.TypeSVCB,
+		proto:   proxy.ProtoTLS,
 	}}
 
 	for _, tc := range testCases {
@@ -56,7 +66,8 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 
 			dctx := &dnsContext{
 				proxyCtx: &proxy.DNSContext{
-					Req: req,
+					Proto: tc.proto,
+					Req:   req,
 				},
 			}
 
