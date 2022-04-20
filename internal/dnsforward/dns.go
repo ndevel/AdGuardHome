@@ -94,6 +94,7 @@ func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
 	mods := []modProcessFunc{
 		s.processRecursion,
 		s.processInitial,
+		s.processDDRQuery,
 		s.processDetermineLocal,
 		s.processInternalHosts,
 		s.processRestrictLocal,
@@ -239,6 +240,22 @@ func (s *Server) onDHCPLeaseChanged(flags int) {
 
 	s.setTableHostToIP(hostToIP)
 	s.setTableIPToHost(ipToHost)
+}
+
+// processDDRQuery responds to SVCB query for a special use domain name
+// ‘_dns.resolver.arpa’.  The result contains different types of encryption
+// supported by current user configuration.
+func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
+	d := ctx.proxyCtx
+
+	if d.Req.Question[0].Qtype == dns.TypeSVCB &&
+		d.Req.Question[0].Name == "_dns.resolver.arpa." {
+		// TODO(d.kolyshev): !! Implement DDR response
+		d.Res = s.makeResponse(d.Req)
+		return resultCodeFinish
+	}
+
+	return resultCodeSuccess
 }
 
 // processDetermineLocal determines if the client's IP address is from

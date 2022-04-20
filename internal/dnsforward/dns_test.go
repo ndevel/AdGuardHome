@@ -14,6 +14,60 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestServer_ProcessDDRQuery(t *testing.T) {
+	const ddrHost = "_dns.resolver.arpa"
+
+	s := &Server{}
+
+	testCases := []struct {
+		name    string
+		wantRes resultCode
+		host    string
+		qtyp    uint16
+	}{{
+		name:    "pass_host",
+		wantRes: resultCodeSuccess,
+		host:    "example.net.",
+		qtyp:    dns.TypeSVCB,
+	}, {
+		name:    "pass_qtype",
+		wantRes: resultCodeSuccess,
+		host:    ddrHost,
+		qtyp:    dns.TypeA,
+	}, {
+		name:    "finish",
+		wantRes: resultCodeFinish,
+		host:    ddrHost,
+		qtyp:    dns.TypeSVCB,
+	}}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			req := &dns.Msg{
+				MsgHdr: dns.MsgHdr{
+					Id: dns.Id(),
+				},
+				Question: []dns.Question{{
+					Name:   dns.Fqdn(tc.host),
+					Qtype:  tc.qtyp,
+					Qclass: dns.ClassINET,
+				}},
+			}
+
+			dctx := &dnsContext{
+				proxyCtx: &proxy.DNSContext{
+					Req: req,
+				},
+			}
+
+			res := s.processDDRQuery(dctx)
+			require.Equal(t, tc.wantRes, res)
+
+			// TODO(d.kolyshev): !! Assert results in dctx
+		})
+	}
+}
+
 func TestServer_ProcessDetermineLocal(t *testing.T) {
 	s := &Server{
 		privateNets: netutil.SubnetSetFunc(netutil.IsLocallyServed),
