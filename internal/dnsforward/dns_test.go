@@ -15,17 +15,15 @@ import (
 )
 
 func TestServer_ProcessDDRQuery(t *testing.T) {
-	const ddrHost = "_dns.resolver.arpa"
-
 	testCases := []struct {
 		name        string
-		wantRes     resultCode
-		want        []dns.SVCBKeyValue
 		host        string
-		qtyp        uint16
-		ddrDisabled bool
+		want        []dns.SVCBKeyValue
+		wantRes     resultCode
 		portDoH     int
 		portDoT     int
+		qtyp        uint16
+		ddrDisabled bool
 	}{{
 		name:    "pass_host",
 		wantRes: resultCodeSuccess,

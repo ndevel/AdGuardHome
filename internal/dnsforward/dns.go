@@ -76,6 +76,10 @@ const (
 	// resultCodeError is returned when a handler failed, and the processing
 	// of the request must be stopped.
 	resultCodeError
+
+	// DDR special use domain name
+	// See https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
+	ddrHost = "_dns.resolver.arpa"
 )
 
 // handleDNSRequest filters the incoming DNS requests and writes them to the query log
@@ -268,7 +272,7 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 // makeDDRResponse creates DDR answer according to server
 // configuration.  Returns nil if DDR is disabled.
 func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
-	// TODO(a.garipov): Check DoQ support in next RFC drafts
+	// TODO(a.garipov): Check DoQ support in next RFC drafts.
 	if s.conf.DDRDisabled ||
 		(s.conf.TLSConfig.PortHTTPS == 0 && s.conf.TLSConfig.PortDNSOverTLS == 0) {
 		return nil
