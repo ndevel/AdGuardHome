@@ -256,7 +256,7 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 	if question.Qtype == dns.TypeSVCB &&
 		question.Name == "_dns.resolver.arpa." {
 		if resp := s.makeDDRResponse(d.Req); resp != nil {
-			d.Req = resp
+			d.Res = resp
 
 			return resultCodeFinish
 		}

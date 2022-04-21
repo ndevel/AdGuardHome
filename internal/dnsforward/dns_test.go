@@ -20,6 +20,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	testCases := []struct {
 		name        string
 		wantRes     resultCode
+		want        []dns.SVCBKeyValue
 		host        string
 		qtyp        uint16
 		ddrDisabled bool
@@ -52,22 +53,25 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}, {
 		name:    "dot",
 		wantRes: resultCodeFinish,
+		want:    []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"dot"}}, &dns.SVCBPort{Port: 8043}},
 		host:    ddrHost,
 		qtyp:    dns.TypeSVCB,
-		portDoH: 8043,
+		portDoT: 8043,
 	}, {
 		name:    "doh",
 		wantRes: resultCodeFinish,
+		want:    []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"h2"}}, &dns.SVCBPort{Port: 8044}},
 		host:    ddrHost,
 		qtyp:    dns.TypeSVCB,
-		portDoT: 8044,
+		portDoH: 8044,
 	}, {
 		name:    "dot_doh",
 		wantRes: resultCodeFinish,
+		want:    []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"h2"}}, &dns.SVCBPort{Port: 8044}},
 		host:    ddrHost,
 		qtyp:    dns.TypeSVCB,
-		portDoH: 8043,
-		portDoT: 8044,
+		portDoT: 8043,
+		portDoH: 8044,
 	}}
 
 	for _, tc := range testCases {
@@ -105,7 +109,24 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 			res := s.processDDRQuery(dctx)
 			require.Equal(t, tc.wantRes, res)
 
-			// TODO(d.kolyshev): !! Assert results in dctx
+			if tc.want != nil {
+				expected := &dns.SVCB{
+					Hdr:      s.hdr(req, dns.TypeSVCB),
+					Priority: 64,
+					Target:   dns.Fqdn(tc.host),
+				}
+
+				expected.Value = tc.want
+
+				ans := dctx.proxyCtx.Res.Answer[0]
+				actual, ok := ans.(*dns.SVCB)
+				require.True(t, ok)
+
+				assert.Equal(t, expected.Hdr, actual.Hdr)
+				assert.Equal(t, expected.Priority, actual.Priority)
+				assert.Equal(t, expected.Target, actual.Target)
+				assert.ElementsMatch(t, expected.Value, actual.Value)
+			}
 		})
 	}
 }
