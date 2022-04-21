@@ -22,45 +22,59 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		wantRes     resultCode
 		host        string
 		qtyp        uint16
-		hostSrvName string
 		ddrDisabled bool
+		portDoH     int
+		portDoT     int
 	}{{
-		name:        "pass_host",
-		wantRes:     resultCodeSuccess,
-		host:        "example.net.",
-		qtyp:        dns.TypeSVCB,
-		hostSrvName: "example.com",
+		name:    "pass_host",
+		wantRes: resultCodeSuccess,
+		host:    "example.net.",
+		qtyp:    dns.TypeSVCB,
+		portDoH: 8043,
 	}, {
-		name:        "pass_qtype",
-		wantRes:     resultCodeSuccess,
-		host:        ddrHost,
-		qtyp:        dns.TypeA,
-		hostSrvName: "example.com",
+		name:    "pass_qtype",
+		wantRes: resultCodeSuccess,
+		host:    ddrHost,
+		qtyp:    dns.TypeA,
+		portDoH: 8043,
 	}, {
-		name:        "pass_disabled_tls",
-		wantRes:     resultCodeSuccess,
-		host:        ddrHost,
-		qtyp:        dns.TypeSVCB,
-		hostSrvName: "",
+		name:    "pass_disabled_tls",
+		wantRes: resultCodeSuccess,
+		host:    ddrHost,
+		qtyp:    dns.TypeSVCB,
 	}, {
 		name:        "pass_disabled_ddr",
 		wantRes:     resultCodeSuccess,
 		host:        ddrHost,
 		qtyp:        dns.TypeSVCB,
-		hostSrvName: "example.com",
 		ddrDisabled: true,
+		portDoH:     8043,
 	}, {
-		name:        "finish",
-		wantRes:     resultCodeFinish,
-		host:        ddrHost,
-		qtyp:        dns.TypeSVCB,
-		hostSrvName: "example.com",
+		name:    "dot",
+		wantRes: resultCodeFinish,
+		host:    ddrHost,
+		qtyp:    dns.TypeSVCB,
+		portDoH: 8043,
+	}, {
+		name:    "doh",
+		wantRes: resultCodeFinish,
+		host:    ddrHost,
+		qtyp:    dns.TypeSVCB,
+		portDoT: 8044,
+	}, {
+		name:    "dot_doh",
+		wantRes: resultCodeFinish,
+		host:    ddrHost,
+		qtyp:    dns.TypeSVCB,
+		portDoH: 8043,
+		portDoT: 8044,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			tlsConf := TLSConfig{
-				ServerName: tc.hostSrvName,
+				PortDNSOverTLS: tc.portDoT,
+				PortHTTPS:      tc.portDoH,
 			}
 
 			s := &Server{

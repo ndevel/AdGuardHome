@@ -3,6 +3,7 @@ package dnsforward
 import (
 	"encoding/binary"
 	"net"
+	"strconv"
 	"strings"
 	"time"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
+	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 )
 
@@ -251,18 +253,55 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 	d := ctx.proxyCtx
 	question := d.Req.Question[0]
 
-	// TODO(a.garipov): Check DoQ support in next RFC drafts
-	if s.conf.TLSConfig.ServerName != "" &&
-		!s.conf.DDRDisabled &&
-		question.Qtype == dns.TypeSVCB &&
+	if question.Qtype == dns.TypeSVCB &&
 		question.Name == "_dns.resolver.arpa." {
-		// TODO(d.kolyshev): !! Implement DDR response
-		d.Res = s.makeResponse(d.Req)
+		if resp := s.makeDDRResponse(d.Req); resp != nil {
+			d.Req = resp
 
-		return resultCodeFinish
+			return resultCodeFinish
+		}
 	}
 
 	return resultCodeSuccess
+}
+
+// makeDDRResponse creates DDR answer according to server
+// configuration.  Returns nil if DDR is disabled.
+func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
+	// TODO(a.garipov): Check DoQ support in next RFC drafts
+	if s.conf.DDRDisabled ||
+		(s.conf.TLSConfig.PortHTTPS == 0 && s.conf.TLSConfig.PortDNSOverTLS == 0) {
+		return nil
+	}
+
+	svcb := s.getSVCBRules(req.Question[0].Name)
+	ans := s.genAnswerSVCB(req, svcb)
+
+	resp = s.makeResponse(req)
+	resp.Answer = append(resp.Answer, ans)
+
+	return resp
+}
+
+// getSVCBRules creates svcb rules for current server configuration.
+func (s *Server) getSVCBRules(host string) (svcb *rules.DNSSVCB) {
+	svcb = &rules.DNSSVCB{
+		Target:   host,
+		Priority: 64,
+	}
+
+	params := map[string]string{}
+	if s.conf.PortHTTPS > 0 {
+		params["alpn"] = "h2"
+		params["port"] = strconv.Itoa(s.conf.PortHTTPS)
+	} else if s.conf.PortDNSOverTLS > 0 {
+		params["alpn"] = "dot"
+		params["port"] = strconv.Itoa(s.conf.PortDNSOverTLS)
+	}
+
+	svcb.Params = params
+
+	return svcb
 }
 
 // processDetermineLocal determines if the client's IP address is from

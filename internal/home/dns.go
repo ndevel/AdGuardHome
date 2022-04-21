@@ -214,6 +214,8 @@ func generateServerConfig() (newConf dnsforward.ServerConfig, err error) {
 	if tlsConf.Enabled {
 		newConf.TLSConfig = tlsConf.TLSConfig
 		newConf.TLSConfig.ServerName = tlsConf.ServerName
+		newConf.TLSConfig.PortDNSOverTLS = tlsConf.PortDNSOverTLS
+		newConf.TLSConfig.PortHTTPS = tlsConf.PortHTTPS
 
 		if tlsConf.PortDNSOverTLS != 0 {
 			newConf.TLSListenAddrs = ipsToTCPAddrs(hosts, tlsConf.PortDNSOverTLS)

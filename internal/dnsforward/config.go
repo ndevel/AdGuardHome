@@ -157,6 +157,9 @@ type TLSConfig struct {
 	cert tls.Certificate
 	// DNS names from certificate (SAN) or CN value from Subject
 	dnsNames []string
+
+	PortDNSOverTLS int
+	PortHTTPS      int
 }
 
 // DNSCryptConfig is the DNSCrypt server configuration struct.
