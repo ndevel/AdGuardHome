@@ -258,7 +258,7 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 	question := d.Req.Question[0]
 
 	// TODO(a.garipov): Check DoQ support in next RFC drafts.
-	if s.conf.DDRDisabled ||
+	if !s.conf.HandleDDR ||
 		(s.dnsProxy.TLSListenAddr == nil && s.dnsProxy.HTTPSListenAddr == nil) {
 
 		return resultCodeSuccess

@@ -122,7 +122,7 @@ type FilteringConfig struct {
 	EnableDNSSEC           bool     `yaml:"enable_dnssec"`      // Set AD flag in outcoming DNS request
 	EnableEDNSClientSubnet bool     `yaml:"edns_client_subnet"` // Enable EDNS Client Subnet option
 	MaxGoroutines          uint32   `yaml:"max_goroutines"`     // Max. number of parallel goroutines for processing incoming requests
-	DDRDisabled            bool     `yaml:"ddr_disabled"`       // Skip DDR requests
+	HandleDDR              bool     `yaml:"handle_ddr"`         // Handle DDR requests
 
 	// IpsetList is the ipset configuration that allows AdGuard Home to add
 	// IP addresses of the specified domain names to an ipset list.  Syntax:

@@ -16,67 +16,73 @@ import (
 
 func TestServer_ProcessDDRQuery(t *testing.T) {
 	testCases := []struct {
-		name        string
-		host        string
-		want        []dns.SVCBKeyValue
-		wantLower   []dns.SVCBKeyValue
-		wantRes     resultCode
-		portDoH     int
-		portDoT     int
-		qtype       uint16
-		ddrDisabled bool
+		name       string
+		host       string
+		want       []dns.SVCBKeyValue
+		wantLower  []dns.SVCBKeyValue
+		wantRes    resultCode
+		portDoH    int
+		portDoT    int
+		qtype      uint16
+		ddrEnabled bool
 	}{{
-		name:    "pass_host",
-		wantRes: resultCodeSuccess,
-		host:    "example.net.",
-		qtype:   dns.TypeSVCB,
-		portDoH: 8043,
+		name:       "pass_host",
+		wantRes:    resultCodeSuccess,
+		host:       "example.net.",
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
+		portDoH:    8043,
 	}, {
-		name:    "pass_qtype",
-		wantRes: resultCodeSuccess,
-		host:    ddrHost,
-		qtype:   dns.TypeA,
-		portDoH: 8043,
+		name:       "pass_qtype",
+		wantRes:    resultCodeSuccess,
+		host:       ddrHost,
+		qtype:      dns.TypeA,
+		ddrEnabled: true,
+		portDoH:    8043,
 	}, {
-		name:    "pass_disabled_tls",
-		wantRes: resultCodeSuccess,
-		host:    ddrHost,
-		qtype:   dns.TypeSVCB,
+		name:       "pass_disabled_tls",
+		wantRes:    resultCodeSuccess,
+		host:       ddrHost,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
 	}, {
-		name:        "pass_disabled_ddr",
-		wantRes:     resultCodeSuccess,
-		host:        ddrHost,
-		qtype:       dns.TypeSVCB,
-		ddrDisabled: true,
-		portDoH:     8043,
+		name:       "pass_disabled_ddr",
+		wantRes:    resultCodeSuccess,
+		host:       ddrHost,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: false,
+		portDoH:    8043,
 	}, {
-		name:    "dot",
-		wantRes: resultCodeFinish,
-		want:    []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"dot"}}, &dns.SVCBPort{Port: 8043}},
-		host:    ddrHost,
-		qtype:   dns.TypeSVCB,
-		portDoT: 8043,
+		name:       "dot",
+		wantRes:    resultCodeFinish,
+		want:       []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"dot"}}, &dns.SVCBPort{Port: 8043}},
+		host:       ddrHost,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
+		portDoT:    8043,
 	}, {
-		name:    "doh",
-		wantRes: resultCodeFinish,
-		want:    []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"h2"}}, &dns.SVCBPort{Port: 8044}},
-		host:    ddrHost,
-		qtype:   dns.TypeSVCB,
-		portDoH: 8044,
+		name:       "doh",
+		wantRes:    resultCodeFinish,
+		want:       []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"h2"}}, &dns.SVCBPort{Port: 8044}},
+		host:       ddrHost,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
+		portDoH:    8044,
 	}, {
-		name:      "dot_doh",
-		wantRes:   resultCodeFinish,
-		want:      []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"h2"}}, &dns.SVCBPort{Port: 8044}},
-		wantLower: []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"dot"}}, &dns.SVCBPort{Port: 8043}},
-		host:      ddrHost,
-		qtype:     dns.TypeSVCB,
-		portDoT:   8043,
-		portDoH:   8044,
+		name:       "dot_doh",
+		wantRes:    resultCodeFinish,
+		want:       []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"h2"}}, &dns.SVCBPort{Port: 8044}},
+		wantLower:  []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"dot"}}, &dns.SVCBPort{Port: 8043}},
+		host:       ddrHost,
+		qtype:      dns.TypeSVCB,
+		ddrEnabled: true,
+		portDoT:    8043,
+		portDoH:    8044,
 	}}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			s := prepareTestServer(t, tc.portDoH, tc.portDoT, tc.ddrDisabled)
+			s := prepareTestServer(t, tc.portDoH, tc.portDoT, tc.ddrEnabled)
 
 			req := createTestMessageWithType(dns.Fqdn(tc.host), tc.qtype)
 
@@ -133,7 +139,7 @@ func assertDDRAnswer(t *testing.T, expected *dns.SVCB, actual dns.RR) {
 	assert.ElementsMatch(t, expected.Value, rr.Value)
 }
 
-func prepareTestServer(t *testing.T, portDoH, portDoT int, ddrDisabled bool) (s *Server) {
+func prepareTestServer(t *testing.T, portDoH, portDoT int, ddrEnabled bool) (s *Server) {
 	t.Helper()
 
 	proxyConf := proxy.Config{}
@@ -152,7 +158,7 @@ func prepareTestServer(t *testing.T, portDoH, portDoT int, ddrDisabled bool) (s 
 		},
 	}
 
-	s.conf.DDRDisabled = ddrDisabled
+	s.conf.HandleDDR = ddrEnabled
 
 	return s
 }
