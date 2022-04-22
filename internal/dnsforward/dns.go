@@ -278,31 +278,36 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 		return nil
 	}
 
-	svcb := s.getSVCBRules(req.Question[0].Name)
-	ans := s.genAnswerSVCB(req, svcb)
-
 	resp = s.makeResponse(req)
-	resp.Answer = append(resp.Answer, ans)
+
+	for _, addr := range s.dnsProxy.HTTPSListenAddr {
+		svcb := getSVCBRules(req.Question[0].Name, 128, "h2", addr.Port)
+		ans := s.genAnswerSVCB(req, svcb)
+
+		resp.Answer = append(resp.Answer, ans)
+	}
+
+	for _, addr := range s.dnsProxy.TLSListenAddr {
+		svcb := getSVCBRules(req.Question[0].Name, 64, "dot", addr.Port)
+		ans := s.genAnswerSVCB(req, svcb)
+
+		resp.Answer = append(resp.Answer, ans)
+	}
 
 	return resp
 }
 
 // getSVCBRules creates svcb rules for current server configuration.
-func (s *Server) getSVCBRules(host string) (svcb *rules.DNSSVCB) {
+func getSVCBRules(host string, priority uint16, alpn string, port int) (svcb *rules.DNSSVCB) {
 	svcb = &rules.DNSSVCB{
 		Target:   host,
-		Priority: 64,
+		Priority: priority,
 	}
 
-	// TODO(d.kolyshev): !! Withdraw all addresses
 	params := map[string]string{}
-	if s.dnsProxy.HTTPSListenAddr != nil {
-		params["alpn"] = "h2"
-		params["port"] = strconv.Itoa(s.dnsProxy.HTTPSListenAddr[0].Port)
-	} else if s.dnsProxy.TLSListenAddr != nil {
-		params["alpn"] = "dot"
-		params["port"] = strconv.Itoa(s.dnsProxy.TLSListenAddr[0].Port)
-	}
+
+	params["alpn"] = alpn
+	params["port"] = strconv.Itoa(port)
 
 	svcb.Params = params
 

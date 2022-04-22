@@ -21,6 +21,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		name        string
 		host        string
 		want        []dns.SVCBKeyValue
+		wantLower   []dns.SVCBKeyValue
 		wantRes     resultCode
 		portDoH     int
 		portDoT     int
@@ -65,13 +66,14 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		qtyp:    dns.TypeSVCB,
 		portDoH: 8044,
 	}, {
-		name:    "dot_doh",
-		wantRes: resultCodeFinish,
-		want:    []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"h2"}}, &dns.SVCBPort{Port: 8044}},
-		host:    ddrHost,
-		qtyp:    dns.TypeSVCB,
-		portDoT: 8043,
-		portDoH: 8044,
+		name:      "dot_doh",
+		wantRes:   resultCodeFinish,
+		want:      []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"h2"}}, &dns.SVCBPort{Port: 8044}},
+		wantLower: []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"dot"}}, &dns.SVCBPort{Port: 8043}},
+		host:      ddrHost,
+		qtyp:      dns.TypeSVCB,
+		portDoT:   8043,
+		portDoH:   8044,
 	}}
 
 	for _, tc := range testCases {
@@ -98,26 +100,48 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 			res := s.processDDRQuery(dctx)
 			require.Equal(t, tc.wantRes, res)
 
-			if tc.want != nil {
-				expected := &dns.SVCB{
-					Hdr:      s.hdr(req, dns.TypeSVCB),
-					Priority: 64,
-					Target:   dns.Fqdn(tc.host),
+			if tc.wantRes == resultCodeFinish {
+				require.NotNil(t, dctx.proxyCtx.Res)
+
+				rrs := dctx.proxyCtx.Res.Answer
+
+				if tc.want != nil {
+					require.True(t, len(rrs) > 0)
+
+					expected := &dns.SVCB{
+						Hdr:    s.hdr(req, dns.TypeSVCB),
+						Target: dns.Fqdn(tc.host),
+						Value:  tc.want,
+					}
+
+					assertDDRAnswer(t, expected, rrs[0])
 				}
 
-				expected.Value = tc.want
+				if tc.wantLower != nil {
+					require.True(t, len(rrs) > 1)
 
-				ans := dctx.proxyCtx.Res.Answer[0]
-				actual, ok := ans.(*dns.SVCB)
-				require.True(t, ok)
+					expected := &dns.SVCB{
+						Hdr:    s.hdr(req, dns.TypeSVCB),
+						Target: dns.Fqdn(tc.host),
+						Value:  tc.wantLower,
+					}
 
-				assert.Equal(t, expected.Hdr, actual.Hdr)
-				assert.Equal(t, expected.Priority, actual.Priority)
-				assert.Equal(t, expected.Target, actual.Target)
-				assert.ElementsMatch(t, expected.Value, actual.Value)
+					assertDDRAnswer(t, expected, rrs[1])
+				}
 			}
 		})
 	}
+}
+
+func assertDDRAnswer(t *testing.T, expected *dns.SVCB, actual dns.RR) {
+	t.Helper()
+
+	rr, ok := actual.(*dns.SVCB)
+	require.True(t, ok)
+
+	assert.Equal(t, expected.Hdr, rr.Hdr)
+	assert.Equal(t, expected.Target, rr.Target)
+	assert.ElementsMatch(t, expected.Value, rr.Value)
 }
 
 func prepareTestServer(t *testing.T, portDoH, portDoT int, ddrDisabled bool) (s *Server) {
