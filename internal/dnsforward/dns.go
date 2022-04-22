@@ -257,27 +257,24 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 	d := ctx.proxyCtx
 	question := d.Req.Question[0]
 
-	if question.Qtype == dns.TypeSVCB &&
-		question.Name == dns.Fqdn(ddrHost) {
-		if resp := s.makeDDRResponse(d.Req); resp != nil {
-			d.Res = resp
+	// TODO(a.garipov): Check DoQ support in next RFC drafts.
+	if s.conf.DDRDisabled ||
+		(s.dnsProxy.TLSListenAddr == nil && s.dnsProxy.HTTPSListenAddr == nil) {
 
-			return resultCodeFinish
-		}
+		return resultCodeSuccess
+	}
+
+	if question.Qtype == dns.TypeSVCB && question.Name == dns.Fqdn(ddrHost) {
+		d.Res = s.makeDDRResponse(d.Req)
+
+		return resultCodeFinish
 	}
 
 	return resultCodeSuccess
 }
 
 // makeDDRResponse creates DDR answer according to server configuration.
-// Returns nil if DDR is disabled.
 func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
-	// TODO(a.garipov): Check DoQ support in next RFC drafts.
-	if s.conf.DDRDisabled ||
-		(s.dnsProxy.TLSListenAddr == nil && s.dnsProxy.HTTPSListenAddr == nil) {
-		return nil
-	}
-
 	resp = s.makeResponse(req)
 
 	for _, addr := range s.dnsProxy.HTTPSListenAddr {

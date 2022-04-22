@@ -23,30 +23,30 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		wantRes     resultCode
 		portDoH     int
 		portDoT     int
-		qtyp        uint16
+		qtype       uint16
 		ddrDisabled bool
 	}{{
 		name:    "pass_host",
 		wantRes: resultCodeSuccess,
 		host:    "example.net.",
-		qtyp:    dns.TypeSVCB,
+		qtype:   dns.TypeSVCB,
 		portDoH: 8043,
 	}, {
 		name:    "pass_qtype",
 		wantRes: resultCodeSuccess,
 		host:    ddrHost,
-		qtyp:    dns.TypeA,
+		qtype:   dns.TypeA,
 		portDoH: 8043,
 	}, {
 		name:    "pass_disabled_tls",
 		wantRes: resultCodeSuccess,
 		host:    ddrHost,
-		qtyp:    dns.TypeSVCB,
+		qtype:   dns.TypeSVCB,
 	}, {
 		name:        "pass_disabled_ddr",
 		wantRes:     resultCodeSuccess,
 		host:        ddrHost,
-		qtyp:        dns.TypeSVCB,
+		qtype:       dns.TypeSVCB,
 		ddrDisabled: true,
 		portDoH:     8043,
 	}, {
@@ -54,14 +54,14 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		wantRes: resultCodeFinish,
 		want:    []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"dot"}}, &dns.SVCBPort{Port: 8043}},
 		host:    ddrHost,
-		qtyp:    dns.TypeSVCB,
+		qtype:   dns.TypeSVCB,
 		portDoT: 8043,
 	}, {
 		name:    "doh",
 		wantRes: resultCodeFinish,
 		want:    []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"h2"}}, &dns.SVCBPort{Port: 8044}},
 		host:    ddrHost,
-		qtyp:    dns.TypeSVCB,
+		qtype:   dns.TypeSVCB,
 		portDoH: 8044,
 	}, {
 		name:      "dot_doh",
@@ -69,7 +69,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		want:      []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"h2"}}, &dns.SVCBPort{Port: 8044}},
 		wantLower: []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"dot"}}, &dns.SVCBPort{Port: 8043}},
 		host:      ddrHost,
-		qtyp:      dns.TypeSVCB,
+		qtype:     dns.TypeSVCB,
 		portDoT:   8043,
 		portDoH:   8044,
 	}}
@@ -78,16 +78,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := prepareTestServer(t, tc.portDoH, tc.portDoT, tc.ddrDisabled)
 
-			req := &dns.Msg{
-				MsgHdr: dns.MsgHdr{
-					Id: dns.Id(),
-				},
-				Question: []dns.Question{{
-					Name:   dns.Fqdn(tc.host),
-					Qtype:  tc.qtyp,
-					Qclass: dns.ClassINET,
-				}},
-			}
+			req := createTestMessageWithType(dns.Fqdn(tc.host), tc.qtype)
 
 			dctx := &dnsContext{
 				proxyCtx: &proxy.DNSContext{
