@@ -14,8 +14,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-const listenIP = "127.0.0.1"
-
 func TestServer_ProcessDDRQuery(t *testing.T) {
 	testCases := []struct {
 		name        string
@@ -150,15 +148,11 @@ func prepareTestServer(t *testing.T, portDoH, portDoT int, ddrDisabled bool) (s 
 	proxyConf := proxy.Config{}
 
 	if portDoH > 0 {
-		proxyConf.HTTPSListenAddr = []*net.TCPAddr{
-			{Port: portDoH, IP: net.ParseIP(listenIP)},
-		}
+		proxyConf.HTTPSListenAddr = []*net.TCPAddr{{Port: portDoH}}
 	}
 
 	if portDoT > 0 {
-		proxyConf.TLSListenAddr = []*net.TCPAddr{
-			{Port: portDoT, IP: net.ParseIP(listenIP)},
-		}
+		proxyConf.TLSListenAddr = []*net.TCPAddr{{Port: portDoT}}
 	}
 
 	s = &Server{
