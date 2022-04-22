@@ -3,7 +3,6 @@ package dnsforward
 import (
 	"encoding/binary"
 	"net"
-	"strconv"
 	"strings"
 	"time"
 
@@ -13,7 +12,6 @@ import (
 	"github.com/AdguardTeam/golibs/log"
 	"github.com/AdguardTeam/golibs/netutil"
 	"github.com/AdguardTeam/golibs/stringutil"
-	"github.com/AdguardTeam/urlfilter/rules"
 	"github.com/miekg/dns"
 )
 
@@ -278,15 +276,13 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 	resp = s.makeResponse(req)
 
 	for _, addr := range s.dnsProxy.HTTPSListenAddr {
-		svcb := getSVCBRules(req.Question[0].Name, 128, "h2", addr.Port)
-		ans := s.genAnswerSVCB(req, svcb)
+		ans := s.genDDRAnswerSVCB(req, "h2", addr.Port)
 
 		resp.Answer = append(resp.Answer, ans)
 	}
 
 	for _, addr := range s.dnsProxy.TLSListenAddr {
-		svcb := getSVCBRules(req.Question[0].Name, 64, "dot", addr.Port)
-		ans := s.genAnswerSVCB(req, svcb)
+		ans := s.genDDRAnswerSVCB(req, "dot", addr.Port)
 
 		resp.Answer = append(resp.Answer, ans)
 	}
@@ -294,21 +290,21 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 	return resp
 }
 
-// getSVCBRules creates svcb rules for current server configuration.
-func getSVCBRules(host string, priority uint16, alpn string, port int) (svcb *rules.DNSSVCB) {
-	svcb = &rules.DNSSVCB{
-		Target:   host,
-		Priority: priority,
+// genDDRAnswerSVCB returns a properly initialized SVCB resource record with DDR value.
+func (s *Server) genDDRAnswerSVCB(req *dns.Msg, alpn string, port int) (ans *dns.SVCB) {
+	values := []dns.SVCBKeyValue{
+		&dns.SVCBAlpn{Alpn: []string{alpn}},
+		&dns.SVCBPort{Port: uint16(port)},
 	}
 
-	params := map[string]string{}
+	ans = &dns.SVCB{
+		Hdr:      s.hdr(req, dns.TypeSVCB),
+		Priority: 1,
+		Target:   dns.Fqdn(req.Question[0].Name),
+		Value:    values,
+	}
 
-	params["alpn"] = alpn
-	params["port"] = strconv.Itoa(port)
-
-	svcb.Params = params
-
-	return svcb
+	return ans
 }
 
 // processDetermineLocal determines if the client's IP address is from
