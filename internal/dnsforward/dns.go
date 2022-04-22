@@ -76,11 +76,11 @@ const (
 	// resultCodeError is returned when a handler failed, and the processing
 	// of the request must be stopped.
 	resultCodeError
-
-	// DDR special use domain name
-	// See https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
-	ddrHost = "_dns.resolver.arpa"
 )
+
+// ddrHost is the domain name used in Discovery of Designated Resolvers (DDR) requests.
+// See https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
+const ddrHost = "_dns.resolver.arpa"
 
 // handleDNSRequest filters the incoming DNS requests and writes them to the query log
 func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
@@ -258,7 +258,7 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 	question := d.Req.Question[0]
 
 	if question.Qtype == dns.TypeSVCB &&
-		question.Name == "_dns.resolver.arpa." {
+		question.Name == dns.Fqdn(ddrHost) {
 		if resp := s.makeDDRResponse(d.Req); resp != nil {
 			d.Res = resp
 
@@ -274,7 +274,7 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 	// TODO(a.garipov): Check DoQ support in next RFC drafts.
 	if s.conf.DDRDisabled ||
-		(s.conf.TLSConfig.PortHTTPS == 0 && s.conf.TLSConfig.PortDNSOverTLS == 0) {
+		(s.dnsProxy.TLSListenAddr == nil && s.dnsProxy.HTTPSListenAddr == nil) {
 		return nil
 	}
 
@@ -294,13 +294,14 @@ func (s *Server) getSVCBRules(host string) (svcb *rules.DNSSVCB) {
 		Priority: 64,
 	}
 
+	// TODO(d.kolyshev): !! Withdraw all addresses
 	params := map[string]string{}
-	if s.conf.PortHTTPS > 0 {
+	if s.dnsProxy.HTTPSListenAddr != nil {
 		params["alpn"] = "h2"
-		params["port"] = strconv.Itoa(s.conf.PortHTTPS)
-	} else if s.conf.PortDNSOverTLS > 0 {
+		params["port"] = strconv.Itoa(s.dnsProxy.HTTPSListenAddr[0].Port)
+	} else if s.dnsProxy.TLSListenAddr != nil {
 		params["alpn"] = "dot"
-		params["port"] = strconv.Itoa(s.conf.PortDNSOverTLS)
+		params["port"] = strconv.Itoa(s.dnsProxy.TLSListenAddr[0].Port)
 	}
 
 	svcb.Params = params

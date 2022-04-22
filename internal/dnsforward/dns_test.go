@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const listenIP = "127.0.0.1"
+
 func TestServer_ProcessDDRQuery(t *testing.T) {
 	testCases := []struct {
 		name        string
@@ -74,18 +76,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			tlsConf := TLSConfig{
-				PortDNSOverTLS: tc.portDoT,
-				PortHTTPS:      tc.portDoH,
-			}
-
-			s := &Server{
-				conf: ServerConfig{TLSConfig: tlsConf},
-			}
-
-			if tc.ddrDisabled {
-				s.conf.DDRDisabled = true
-			}
+			s := prepareTestServer(t, tc.portDoH, tc.portDoT, tc.ddrDisabled)
 
 			req := &dns.Msg{
 				MsgHdr: dns.MsgHdr{
@@ -127,6 +118,34 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 			}
 		})
 	}
+}
+
+func prepareTestServer(t *testing.T, portDoH, portDoT int, ddrDisabled bool) (s *Server) {
+	t.Helper()
+
+	proxyConf := proxy.Config{}
+
+	if portDoH > 0 {
+		proxyConf.HTTPSListenAddr = []*net.TCPAddr{
+			{Port: portDoH, IP: net.ParseIP(listenIP)},
+		}
+	}
+
+	if portDoT > 0 {
+		proxyConf.TLSListenAddr = []*net.TCPAddr{
+			{Port: portDoT, IP: net.ParseIP(listenIP)},
+		}
+	}
+
+	s = &Server{
+		dnsProxy: &proxy.Proxy{
+			Config: proxyConf,
+		},
+	}
+
+	s.conf.DDRDisabled = ddrDisabled
+
+	return s
 }
 
 func TestServer_ProcessDetermineLocal(t *testing.T) {

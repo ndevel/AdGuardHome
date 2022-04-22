@@ -151,15 +151,13 @@ type TLSConfig struct {
 	CertificateChainData []byte `yaml:"-" json:"-"`
 	PrivateKeyData       []byte `yaml:"-" json:"-"`
 
-	// ServerName is the hostname of the server.
+	// ServerName is the hostname of the server.  Currently, it is only being
+	// used for ClientID checking.
 	ServerName string `yaml:"-" json:"-"`
 
 	cert tls.Certificate
 	// DNS names from certificate (SAN) or CN value from Subject
 	dnsNames []string
-
-	PortDNSOverTLS int
-	PortHTTPS      int
 }
 
 // DNSCryptConfig is the DNSCrypt server configuration struct.
