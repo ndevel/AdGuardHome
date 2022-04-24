@@ -2,6 +2,7 @@ package dnsforward
 
 import (
 	"net"
+	"sort"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
@@ -96,9 +97,20 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 			require.Equal(t, tc.wantRes, res)
 
 			if tc.wantRes == resultCodeFinish {
-				require.NotNil(t, dctx.proxyCtx.Res)
+				msg := dctx.proxyCtx.Res
+				require.NotNil(t, msg)
 
-				rrs := dctx.proxyCtx.Res.Answer
+				var rrs []*dns.SVCB
+				for _, rr := range msg.Answer {
+					svcb, ok := rr.(*dns.SVCB)
+					require.True(t, ok)
+
+					rrs = append(rrs, svcb)
+				}
+
+				sort.Slice(rrs, func(i, j int) bool {
+					return rrs[i].Priority < rrs[j].Priority
+				})
 
 				if tc.want != nil {
 					require.True(t, len(rrs) > 0)
