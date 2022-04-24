@@ -36,20 +36,20 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}, {
 		name:       "pass_qtype",
 		wantRes:    resultCodeSuccess,
-		host:       ddrHost,
+		host:       ddrHostFQDN,
 		qtype:      dns.TypeA,
 		ddrEnabled: true,
 		portDoH:    8043,
 	}, {
 		name:       "pass_disabled_tls",
 		wantRes:    resultCodeSuccess,
-		host:       ddrHost,
+		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
 	}, {
 		name:       "pass_disabled_ddr",
 		wantRes:    resultCodeSuccess,
-		host:       ddrHost,
+		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: false,
 		portDoH:    8043,
@@ -57,7 +57,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		name:       "dot",
 		wantRes:    resultCodeFinish,
 		want:       []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"dot"}}, &dns.SVCBPort{Port: 8043}},
-		host:       ddrHost,
+		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
 		portDoT:    8043,
@@ -65,7 +65,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		name:       "doh",
 		wantRes:    resultCodeFinish,
 		want:       []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"h2"}}, &dns.SVCBPort{Port: 8044}},
-		host:       ddrHost,
+		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
 		portDoH:    8044,
@@ -74,7 +74,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		wantRes:    resultCodeFinish,
 		want:       []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"h2"}}, &dns.SVCBPort{Port: 8044}},
 		wantLower:  []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"dot"}}, &dns.SVCBPort{Port: 8043}},
-		host:       ddrHost,
+		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
 		portDoT:    8043,
@@ -85,7 +85,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			s := prepareTestServer(t, tc.portDoH, tc.portDoT, tc.ddrEnabled)
 
-			req := createTestMessageWithType(dns.Fqdn(tc.host), tc.qtype)
+			req := createTestMessageWithType(tc.host, tc.qtype)
 
 			dctx := &dnsContext{
 				proxyCtx: &proxy.DNSContext{
@@ -117,7 +117,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 
 					expected := &dns.SVCB{
 						Hdr:    s.hdr(req, dns.TypeSVCB),
-						Target: dns.Fqdn(tc.host),
+						Target: tc.host,
 						Value:  tc.want,
 					}
 
@@ -129,7 +129,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 
 					expected := &dns.SVCB{
 						Hdr:    s.hdr(req, dns.TypeSVCB),
-						Target: dns.Fqdn(tc.host),
+						Target: tc.host,
 						Value:  tc.wantLower,
 					}
 

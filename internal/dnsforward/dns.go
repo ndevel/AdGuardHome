@@ -76,9 +76,9 @@ const (
 	resultCodeError
 )
 
-// ddrHost is the domain name used in Discovery of Designated Resolvers (DDR) requests.
+// ddrHostFQDN is the FQDN used in Discovery of Designated Resolvers (DDR) requests.
 // See https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html.
-const ddrHost = "_dns.resolver.arpa"
+const ddrHostFQDN = "_dns.resolver.arpa."
 
 // handleDNSRequest filters the incoming DNS requests and writes them to the query log
 func (s *Server) handleDNSRequest(_ *proxy.Proxy, d *proxy.DNSContext) error {
@@ -262,7 +262,7 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess
 	}
 
-	if question.Qtype == dns.TypeSVCB && question.Name == dns.Fqdn(ddrHost) {
+	if question.Qtype == dns.TypeSVCB && question.Name == ddrHostFQDN {
 		d.Res = s.makeDDRResponse(d.Req)
 
 		return resultCodeFinish
@@ -300,7 +300,7 @@ func (s *Server) genDDRAnswerSVCB(req *dns.Msg, alpn string, port int) (ans *dns
 	ans = &dns.SVCB{
 		Hdr:      s.hdr(req, dns.TypeSVCB),
 		Priority: 1,
-		Target:   dns.Fqdn(req.Question[0].Name),
+		Target:   req.Question[0].Name,
 		Value:    values,
 	}
 
