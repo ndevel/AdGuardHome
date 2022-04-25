@@ -19,12 +19,11 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	dotSVCBValues := []dns.SVCBKeyValue{
 		&dns.SVCBAlpn{Alpn: []string{"dot"}},
 		&dns.SVCBPort{Port: 8043},
-		&dns.SVCBDoHPath{Template: "/"},
 	}
 	dohSVCBValues := []dns.SVCBKeyValue{
 		&dns.SVCBAlpn{Alpn: []string{"h2"}},
 		&dns.SVCBPort{Port: 8044},
-		&dns.SVCBDoHPath{Template: "/"},
+		&dns.SVCBDoHPath{Template: "/dns-query"},
 	}
 
 	testCases := []struct {

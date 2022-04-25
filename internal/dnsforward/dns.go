@@ -276,36 +276,39 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 	resp = s.makeResponse(req)
 
 	for _, addr := range s.dnsProxy.HTTPSListenAddr {
-		ans := s.genDDRAnswerSVCB(req, "h2", addr.Port)
+		values := []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"h2"}},
+			&dns.SVCBPort{Port: uint16(addr.Port)},
+			&dns.SVCBDoHPath{Template: "/dns-query"},
+		}
+
+		ans := &dns.SVCB{
+			Hdr:      s.hdr(req, dns.TypeSVCB),
+			Priority: 1,
+			Target:   req.Question[0].Name,
+			Value:    values,
+		}
 
 		resp.Answer = append(resp.Answer, ans)
 	}
 
 	for _, addr := range s.dnsProxy.TLSListenAddr {
-		ans := s.genDDRAnswerSVCB(req, "dot", addr.Port)
+		values := []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"dot"}},
+			&dns.SVCBPort{Port: uint16(addr.Port)},
+		}
+
+		ans := &dns.SVCB{
+			Hdr:      s.hdr(req, dns.TypeSVCB),
+			Priority: 2,
+			Target:   req.Question[0].Name,
+			Value:    values,
+		}
 
 		resp.Answer = append(resp.Answer, ans)
 	}
 
 	return resp
-}
-
-// genDDRAnswerSVCB returns a properly initialized SVCB resource record with DDR value.
-func (s *Server) genDDRAnswerSVCB(req *dns.Msg, alpn string, port int) (ans *dns.SVCB) {
-	values := []dns.SVCBKeyValue{
-		&dns.SVCBAlpn{Alpn: []string{alpn}},
-		&dns.SVCBPort{Port: uint16(port)},
-		&dns.SVCBDoHPath{Template: "/"},
-	}
-
-	ans = &dns.SVCB{
-		Hdr:      s.hdr(req, dns.TypeSVCB),
-		Priority: 1,
-		Target:   req.Question[0].Name,
-		Value:    values,
-	}
-
-	return ans
 }
 
 // processDetermineLocal determines if the client's IP address is from
