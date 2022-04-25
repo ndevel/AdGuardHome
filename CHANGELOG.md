@@ -33,6 +33,8 @@ and this project adheres to
 - Logs are now collected by default on FreeBSD and OpenBSD when AdGuard Home is
   installed as a service ([#4213]).
 - `windows/arm64` support ([#3057]).
+- Support for Discovery of Designated Resolvers (DDR) according to the 
+  [RFC draft][ddr-draft-06] ([#4463]).
 
 ### Changed
 
@@ -109,6 +111,7 @@ In this release, the schema version has changed from 12 to 13.
 
 [repr]:         https://reproducible-builds.org/docs/source-date-epoch/
 [doq-draft-10]: https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-10#section-10.2
+[ddr-draft-06]: https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html
 
 
 
