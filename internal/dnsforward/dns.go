@@ -295,6 +295,7 @@ func (s *Server) genDDRAnswerSVCB(req *dns.Msg, alpn string, port int) (ans *dns
 	values := []dns.SVCBKeyValue{
 		&dns.SVCBAlpn{Alpn: []string{alpn}},
 		&dns.SVCBPort{Port: uint16(port)},
+		&dns.SVCBDoHPath{Template: "/"},
 	}
 
 	ans = &dns.SVCB{

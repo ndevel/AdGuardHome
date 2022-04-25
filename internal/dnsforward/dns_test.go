@@ -16,6 +16,17 @@ import (
 )
 
 func TestServer_ProcessDDRQuery(t *testing.T) {
+	dotSVCBValues := []dns.SVCBKeyValue{
+		&dns.SVCBAlpn{Alpn: []string{"dot"}},
+		&dns.SVCBPort{Port: 8043},
+		&dns.SVCBDoHPath{Template: "/"},
+	}
+	dohSVCBValues := []dns.SVCBKeyValue{
+		&dns.SVCBAlpn{Alpn: []string{"h2"}},
+		&dns.SVCBPort{Port: 8044},
+		&dns.SVCBDoHPath{Template: "/"},
+	}
+
 	testCases := []struct {
 		name       string
 		host       string
@@ -56,7 +67,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}, {
 		name:       "dot",
 		wantRes:    resultCodeFinish,
-		want:       []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"dot"}}, &dns.SVCBPort{Port: 8043}},
+		want:       dotSVCBValues,
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
@@ -64,7 +75,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}, {
 		name:       "doh",
 		wantRes:    resultCodeFinish,
-		want:       []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"h2"}}, &dns.SVCBPort{Port: 8044}},
+		want:       dohSVCBValues,
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
@@ -72,8 +83,8 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}, {
 		name:       "dot_doh",
 		wantRes:    resultCodeFinish,
-		want:       []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"h2"}}, &dns.SVCBPort{Port: 8044}},
-		wantLower:  []dns.SVCBKeyValue{&dns.SVCBAlpn{Alpn: []string{"dot"}}, &dns.SVCBPort{Port: 8043}},
+		want:       dohSVCBValues,
+		wantLower:  dotSVCBValues,
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
