@@ -274,6 +274,7 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 // makeDDRResponse creates DDR answer according to server configuration.
 func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 	resp = s.makeResponse(req)
+	domainName := s.conf.ServerName
 
 	for _, addr := range s.dnsProxy.HTTPSListenAddr {
 		values := []dns.SVCBKeyValue{
@@ -285,7 +286,7 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 		ans := &dns.SVCB{
 			Hdr:      s.hdr(req, dns.TypeSVCB),
 			Priority: 1,
-			Target:   req.Question[0].Name,
+			Target:   domainName,
 			Value:    values,
 		}
 
@@ -301,7 +302,7 @@ func (s *Server) makeDDRResponse(req *dns.Msg) (resp *dns.Msg) {
 		ans := &dns.SVCB{
 			Hdr:      s.hdr(req, dns.TypeSVCB),
 			Priority: 2,
-			Target:   req.Question[0].Name,
+			Target:   domainName,
 			Value:    values,
 		}
 

@@ -152,7 +152,7 @@ type TLSConfig struct {
 	PrivateKeyData       []byte `yaml:"-" json:"-"`
 
 	// ServerName is the hostname of the server.  Currently, it is only being
-	// used for ClientID checking.
+	// used for ClientID checking and Discovery of Designated Resolvers (DDR).
 	ServerName string `yaml:"-" json:"-"`
 
 	cert tls.Certificate

@@ -15,6 +15,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+const ddrTestDomainName = "dns.example.net"
+
 func TestServer_ProcessDDRQuery(t *testing.T) {
 	dotSVCBValues := []dns.SVCBKeyValue{
 		&dns.SVCBAlpn{Alpn: []string{"dot"}},
@@ -127,7 +129,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 
 					expected := &dns.SVCB{
 						Hdr:    s.hdr(req, dns.TypeSVCB),
-						Target: tc.host,
+						Target: ddrTestDomainName,
 						Value:  tc.want,
 					}
 
@@ -139,7 +141,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 
 					expected := &dns.SVCB{
 						Hdr:    s.hdr(req, dns.TypeSVCB),
-						Target: tc.host,
+						Target: ddrTestDomainName,
 						Value:  tc.wantLower,
 					}
 
@@ -181,6 +183,7 @@ func prepareTestServer(t *testing.T, portDoH, portDoT int, ddrEnabled bool) (s *
 	}
 
 	s.conf.HandleDDR = ddrEnabled
+	s.conf.ServerName = ddrTestDomainName
 
 	return s
 }
