@@ -2,7 +2,6 @@ package dnsforward
 
 import (
 	"net"
-	"sort"
 	"testing"
 
 	"github.com/AdguardTeam/AdGuardHome/internal/aghtest"
@@ -18,21 +17,29 @@ import (
 const ddrTestDomainName = "dns.example.net"
 
 func TestServer_ProcessDDRQuery(t *testing.T) {
-	dotSVCBValues := []dns.SVCBKeyValue{
-		&dns.SVCBAlpn{Alpn: []string{"dot"}},
-		&dns.SVCBPort{Port: 8043},
+	dohSVCB := &dns.SVCB{
+		Priority: 1,
+		Target:   ddrTestDomainName,
+		Value: []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"h2"}},
+			&dns.SVCBPort{Port: 8044},
+			&dns.SVCBDoHPath{Template: "/dns-query"},
+		},
 	}
-	dohSVCBValues := []dns.SVCBKeyValue{
-		&dns.SVCBAlpn{Alpn: []string{"h2"}},
-		&dns.SVCBPort{Port: 8044},
-		&dns.SVCBDoHPath{Template: "/dns-query"},
+
+	dotSVCB := &dns.SVCB{
+		Priority: 2,
+		Target:   ddrTestDomainName,
+		Value: []dns.SVCBKeyValue{
+			&dns.SVCBAlpn{Alpn: []string{"dot"}},
+			&dns.SVCBPort{Port: 8043},
+		},
 	}
 
 	testCases := []struct {
 		name       string
 		host       string
-		want       []dns.SVCBKeyValue
-		wantLower  []dns.SVCBKeyValue
+		want       []*dns.SVCB
 		wantRes    resultCode
 		portDoH    int
 		portDoT    int
@@ -68,7 +75,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}, {
 		name:       "dot",
 		wantRes:    resultCodeFinish,
-		want:       dotSVCBValues,
+		want:       []*dns.SVCB{dotSVCB},
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
@@ -76,7 +83,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}, {
 		name:       "doh",
 		wantRes:    resultCodeFinish,
-		want:       dohSVCBValues,
+		want:       []*dns.SVCB{dohSVCB},
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
@@ -84,8 +91,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 	}, {
 		name:       "dot_doh",
 		wantRes:    resultCodeFinish,
-		want:       dohSVCBValues,
-		wantLower:  dotSVCBValues,
+		want:       []*dns.SVCB{dotSVCB, dohSVCB},
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
@@ -108,59 +114,20 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 			res := s.processDDRQuery(dctx)
 			require.Equal(t, tc.wantRes, res)
 
-			if tc.wantRes == resultCodeFinish {
-				msg := dctx.proxyCtx.Res
-				require.NotNil(t, msg)
-
-				var rrs []*dns.SVCB
-				for _, rr := range msg.Answer {
-					svcb, ok := rr.(*dns.SVCB)
-					require.True(t, ok)
-
-					rrs = append(rrs, svcb)
-				}
-
-				sort.Slice(rrs, func(i, j int) bool {
-					return rrs[i].Priority < rrs[j].Priority
-				})
-
-				if tc.want != nil {
-					require.True(t, len(rrs) > 0)
-
-					expected := &dns.SVCB{
-						Hdr:    s.hdr(req, dns.TypeSVCB),
-						Target: ddrTestDomainName,
-						Value:  tc.want,
-					}
-
-					assertDDRAnswer(t, expected, rrs[0])
-				}
-
-				if tc.wantLower != nil {
-					require.True(t, len(rrs) > 1)
-
-					expected := &dns.SVCB{
-						Hdr:    s.hdr(req, dns.TypeSVCB),
-						Target: ddrTestDomainName,
-						Value:  tc.wantLower,
-					}
-
-					assertDDRAnswer(t, expected, rrs[1])
-				}
+			if tc.wantRes != resultCodeFinish {
+				return
 			}
+
+			msg := dctx.proxyCtx.Res
+			require.NotNil(t, msg)
+
+			for _, v := range tc.want {
+				v.Hdr = s.hdr(req, dns.TypeSVCB)
+			}
+
+			assert.ElementsMatch(t, tc.want, msg.Answer)
 		})
 	}
-}
-
-func assertDDRAnswer(t *testing.T, expected *dns.SVCB, actual dns.RR) {
-	t.Helper()
-
-	rr, ok := actual.(*dns.SVCB)
-	require.True(t, ok)
-
-	assert.Equal(t, expected.Hdr, rr.Hdr)
-	assert.Equal(t, expected.Target, rr.Target)
-	assert.ElementsMatch(t, expected.Value, rr.Value)
 }
 
 func prepareTestServer(t *testing.T, portDoH, portDoT int, ddrEnabled bool) (s *Server) {
