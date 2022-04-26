@@ -54,14 +54,14 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		portDoH:    8043,
 	}, {
 		name:       "pass_qtype",
-		wantRes:    resultCodeSuccess,
+		wantRes:    resultCodeFinish,
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeA,
 		ddrEnabled: true,
 		portDoH:    8043,
 	}, {
 		name:       "pass_disabled_tls",
-		wantRes:    resultCodeError,
+		wantRes:    resultCodeFinish,
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,
@@ -114,7 +114,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 			res := s.processDDRQuery(dctx)
 			require.Equal(t, tc.wantRes, res)
 
-			if tc.wantRes != resultCodeFinish {
+			if tc.want == nil {
 				return
 			}
 

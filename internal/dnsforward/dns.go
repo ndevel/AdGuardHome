@@ -259,10 +259,12 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 		return resultCodeSuccess
 	}
 
-	if question.Qtype == dns.TypeSVCB && question.Name == ddrHostFQDN {
+	if question.Name == ddrHostFQDN {
 		// TODO(a.garipov): Check DoQ support in next RFC drafts.
-		if s.dnsProxy.TLSListenAddr == nil && s.dnsProxy.HTTPSListenAddr == nil {
-			return resultCodeError
+		if s.dnsProxy.TLSListenAddr == nil && s.dnsProxy.HTTPSListenAddr == nil ||
+			question.Qtype != dns.TypeSVCB {
+			// TODO(d.kolyshev): !! Return NODATA response
+			return resultCodeFinish
 		}
 
 		d.Res = s.makeDDRResponse(d.Req)
