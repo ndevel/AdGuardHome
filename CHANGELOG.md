@@ -144,11 +144,10 @@ In this release, the schema version has changed from 12 to 14.
 [#4238]: https://github.com/AdguardTeam/AdGuardHome/issues/4238
 [#4276]: https://github.com/AdguardTeam/AdGuardHome/issues/4276
 [#4499]: https://github.com/AdguardTeam/AdGuardHome/issues/4499
-[#4463]: https://github.com/AdguardTeam/AdGuardHome/issues/4463
 
-[repr]:         https://reproducible-builds.org/docs/source-date-epoch/
-[doq-draft-10]: https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-10#section-10.2
 [ddr-draft-06]: https://www.ietf.org/archive/id/draft-ietf-add-ddr-06.html
+[doq-draft-10]: https://datatracker.ietf.org/doc/html/draft-ietf-dprive-dnsoquic-10#section-10.2
+[repr]:         https://reproducible-builds.org/docs/source-date-epoch/
 
 
 
