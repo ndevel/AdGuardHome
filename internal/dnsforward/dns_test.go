@@ -147,10 +147,15 @@ func prepareTestServer(t *testing.T, portDoH, portDoT int, ddrEnabled bool) (s *
 		dnsProxy: &proxy.Proxy{
 			Config: proxyConf,
 		},
+		conf: ServerConfig{
+			FilteringConfig: FilteringConfig{
+				HandleDDR: ddrEnabled,
+			},
+			TLSConfig: TLSConfig{
+				ServerName: ddrTestDomainName,
+			},
+		},
 	}
-
-	s.conf.HandleDDR = ddrEnabled
-	s.conf.ServerName = ddrTestDomainName
 
 	return s
 }
