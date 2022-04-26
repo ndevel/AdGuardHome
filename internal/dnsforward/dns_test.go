@@ -114,7 +114,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 			res := s.processDDRQuery(dctx)
 			require.Equal(t, tc.wantRes, res)
 
-			if tc.want == nil {
+			if tc.wantRes != resultCodeFinish {
 				return
 			}
 

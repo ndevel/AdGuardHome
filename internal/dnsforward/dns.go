@@ -263,7 +263,8 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 		// TODO(a.garipov): Check DoQ support in next RFC drafts.
 		if s.dnsProxy.TLSListenAddr == nil && s.dnsProxy.HTTPSListenAddr == nil ||
 			question.Qtype != dns.TypeSVCB {
-			// TODO(d.kolyshev): !! Return NODATA response
+			d.Res = s.makeResponse(d.Req)
+
 			return resultCodeFinish
 		}
 
