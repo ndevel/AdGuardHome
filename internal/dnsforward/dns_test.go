@@ -61,7 +61,7 @@ func TestServer_ProcessDDRQuery(t *testing.T) {
 		portDoH:    8043,
 	}, {
 		name:       "pass_disabled_tls",
-		wantRes:    resultCodeSuccess,
+		wantRes:    resultCodeError,
 		host:       ddrHostFQDN,
 		qtype:      dns.TypeSVCB,
 		ddrEnabled: true,

@@ -255,14 +255,16 @@ func (s *Server) processDDRQuery(ctx *dnsContext) (rc resultCode) {
 	d := ctx.proxyCtx
 	question := d.Req.Question[0]
 
-	// TODO(a.garipov): Check DoQ support in next RFC drafts.
-	if !s.conf.HandleDDR ||
-		(s.dnsProxy.TLSListenAddr == nil && s.dnsProxy.HTTPSListenAddr == nil) {
-
+	if !s.conf.HandleDDR {
 		return resultCodeSuccess
 	}
 
 	if question.Qtype == dns.TypeSVCB && question.Name == ddrHostFQDN {
+		// TODO(a.garipov): Check DoQ support in next RFC drafts.
+		if s.dnsProxy.TLSListenAddr == nil && s.dnsProxy.HTTPSListenAddr == nil {
+			return resultCodeError
+		}
+
 		d.Res = s.makeDDRResponse(d.Req)
 
 		return resultCodeFinish
