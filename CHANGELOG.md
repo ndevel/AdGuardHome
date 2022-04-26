@@ -23,6 +23,8 @@ and this project adheres to
 
 ### Added
 
+- Support for Discovery of Designated Resolvers (DDR) according to the 
+  [RFC draft][ddr-draft-06] ([#4463]).
 - The ability to control each source of runtime clients separately via
   `clients.runtime_sources` configuration object ([#3020]).
 - The ability to customize the set of networks that are considered private
@@ -35,8 +37,6 @@ and this project adheres to
 - Logs are now collected by default on FreeBSD and OpenBSD when AdGuard Home is
   installed as a service ([#4213]).
 - `windows/arm64` support ([#3057]).
-- Support for Discovery of Designated Resolvers (DDR) according to the 
-  [RFC draft][ddr-draft-06] ([#4463]).
 
 ### Changed
 
