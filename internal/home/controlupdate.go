@@ -31,7 +31,8 @@ func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
 	resp := &versionResponse{}
-	if Context.disableUpdate {
+	//if Context.disableUpdate {
+	if true {
 		resp.Disabled = true
 		err := json.NewEncoder(w).Encode(resp)
 		if err != nil {

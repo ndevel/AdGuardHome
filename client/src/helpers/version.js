@@ -10,8 +10,5 @@ export const areEqualVersions = (left, right) => {
     if (!left || !right) {
         return false;
     }
-
-    const leftVersion = left.replace(/^v/, '');
-    const rightVersion = right.replace(/^v/, '');
-    return leftVersion === rightVersion;
+    return true;
 };
