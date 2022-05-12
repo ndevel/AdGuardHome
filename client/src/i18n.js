@@ -5,7 +5,6 @@ import langDetect from 'i18next-browser-languagedetector';
 import { LANGUAGES, BASE_LOCALE } from './helpers/twosky';
 
 import en from './__locales/en.json';
-import zhCN from './__locales/zh-cn.json';
 import { setHtmlLangAttr } from './helpers/helpers';
 
 const resources = {
