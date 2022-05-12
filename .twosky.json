@@ -4,8 +4,7 @@
     "base_locale": "en",
     "localizable_files": ["client/src/__locales/en.json"],
     "languages": {
-      "en": "English",
-      "zh-cn": "简体中文"
+      "en": "English"
     }
   }
 ]

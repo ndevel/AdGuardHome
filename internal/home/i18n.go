@@ -14,7 +14,6 @@ import (
 // TODO(a.garipov): Get rid of a global or generate from .twosky.json.
 var allowedLanguages = stringutil.NewSet(
 	"en",
-	"zh-cn",
 )
 
 func handleI18nCurrentLanguage(w http.ResponseWriter, r *http.Request) {

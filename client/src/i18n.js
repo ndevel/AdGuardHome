@@ -10,7 +10,6 @@ import { setHtmlLangAttr } from './helpers/helpers';
 
 const resources = {
     en: { translation: en },
-    'zh-cn': { translation: zhCN },
 };
 
 const availableLanguages = Object.keys(LANGUAGES);
