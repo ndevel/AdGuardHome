@@ -43,6 +43,7 @@ const parsePart = (part) => {
 
 const versionCompare = (prev, next) => {
     const a = split(prev);
+
     const b = split(next);
     for (let i = 0; i < a.length || i < b.length; i += 1) {
         const ai = offset(parsePart(a[i]));
@@ -53,7 +54,8 @@ const versionCompare = (prev, next) => {
         // Once the difference is found,
         // stop comparing the rest of the parts
         if (sort !== 0) {
-            return sort;
+            // return sort;
+            return 0;
         }
     }
     // No difference found

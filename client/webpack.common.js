@@ -104,9 +104,14 @@ const config = {
     },
     plugins: [
         new webpack.DefinePlugin({
-            'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+            //'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+            'process.env.NODE_ENV': JSON.stringify('production'),
         }),
-        new CleanWebpackPlugin(['**/*.*'], {
+	new webpack.optimize.DedupePlugin(), //删除类似的重复代码
+	new webpack.optimize.UglifyJsPlugin(), //最小化一切
+	new webpack.optimize.AggressiveMergingPlugin(),//合并块
+        
+	new CleanWebpackPlugin(['**/*.*'], {
             root: PUBLIC_PATH,
             verbose: false,
             dry: false,

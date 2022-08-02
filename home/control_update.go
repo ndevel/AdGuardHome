@@ -82,7 +82,7 @@ type getVersionJSONRequest struct {
 // Get the latest available version from the Internet
 func handleGetVersionJSON(w http.ResponseWriter, r *http.Request) {
 
-	if Context.disableUpdate {
+	if true { //Context.disableUpdate {
 		return
 	}
 

@@ -24,8 +24,8 @@ $(STATIC): $(JSFILES) client/node_modules
 	npm --prefix client run build-prod
 
 $(TARGET): $(STATIC) *.go home/*.go dhcpd/*.go dnsfilter/*.go dnsforward/*.go
-	GOOS=$(NATIVE_GOOS) GOARCH=$(NATIVE_GOARCH) GO111MODULE=off go get -v github.com/gobuffalo/packr/...
-	PATH=$(GOPATH)/bin:$(PATH) packr -z
+	GOOS=$(NATIVE_GOOS) GOARCH=$(NATIVE_GOARCH) GO111MODULE=on go get -v github.com/ndevel/packr/@v1.30.1
+	PATH=$(GOPATH)/bin:$(PATH) packr
 	CGO_ENABLED=0 go build -ldflags="-s -w -X main.version=$(GIT_VERSION) -X main.channel=$(CHANNEL) -X main.goarm=$(GOARM)" -asmflags="-trimpath=$(PWD)" -gcflags="-trimpath=$(PWD)"
 	PATH=$(GOPATH)/bin:$(PATH) packr clean
 
